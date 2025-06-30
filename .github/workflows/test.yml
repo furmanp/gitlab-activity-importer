@@ -1,4 +1,4 @@
-name: Tests
+name: Build and Test
 
 on:
   push:
@@ -17,5 +17,8 @@ jobs:
         with:
           go-version: '1.23.1'
 
-      - name: run tests
+      - name: Build the application
+        run: go build -v ./...
+
+      - name: Run tests
         run: go test ./...
