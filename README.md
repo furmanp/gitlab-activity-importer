@@ -19,7 +19,7 @@ A tool to transfer your GitLab commit history to GitHub, reflecting your GitLab 
 ## Overview
 This tool fetches your commit history from private GitLab repositories and imports it into a specified GitHub repository, creating a visual representation of your activity on GitHub’s contribution graph. It can be configured for automated daily imports or manual runs.
 
-## Features 
+## Features
 -	Automated Daily Imports: Syncs your GitLab activity with GitHub automatically each day.
 -	Manual Imports: Allows on-demand updates.
 -	Secure Data Handling: Requires minimal permissions and uses GitHub repository secrets for configuration.
@@ -68,7 +68,7 @@ This project uses GitHub Actions to automate builds and daily synchronization:
 - Secrets Configuration: The secrets allow secure storage and retrieval of required tokens and URLs during automation.
 
 ### Important Notes:
-- **GitLab permissions:** The tool only requires read access to your GitLab repositories.
+- **GitLab permissions:** The tool requires read-only access to your GitLab user and Gitlab repositories (`read_user` and `read_repository`)
 - **GitHub permissions:** Your GitHub token must have write access to the destination repository for automatic pushes.
 
 ## License
