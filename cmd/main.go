@@ -46,13 +46,16 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	totalCommitsCreated := 0
+	var totalCommitsCreated int
 	go func() {
 		defer wg.Done()
 		totalCommits := 0
 		for commits := range commitChannel {
-			localCommits := services.CreateLocalCommit(repo, commits)
-			totalCommits += localCommits
+			if localCommits, err := services.CreateLocalCommit(repo, commits); err == nil {
+				totalCommits += localCommits
+			} else {
+				log.Printf("Error creating local commit: %v", err)
+			}
 		}
 		totalCommitsCreated = totalCommits
 		log.Printf("Imported %v commits.\n", totalCommits)
@@ -64,6 +67,7 @@ func main() {
 
 	if totalCommitsCreated > 0 {
 		services.PushLocalCommits(repo)
+		log.Println("Successfully pushed commits to remote repository.")
 	} else {
 		log.Println("No new commits were created, skipping push operation.")
 	}

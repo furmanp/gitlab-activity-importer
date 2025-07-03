@@ -71,15 +71,15 @@ func cloneRemoteRepo() (*git.Repository, error) {
 	return repo, nil
 }
 
-func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) int {
+func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) (int, error) {
 	if len(commits) == 0 {
 		log.Println("No commits to process")
-		return 0
+		return 0, nil
 	}
 
 	workTree, err := repo.Worktree()
 	if err != nil {
-		log.Fatal(err)
+		return 0, fmt.Errorf("failed to get worktree: %w", err)
 	}
 
 	repoPath := internal.GetHomeDirectory() + "/commits-importer/"
@@ -87,20 +87,26 @@ func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) int {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		file, err := os.Create(filePath)
 		if err != nil {
-			log.Fatal(err)
+			return 0, fmt.Errorf("failed to create file: %w", err)
 		}
-		file.WriteString("Just a readme.")
-		file.Close()
+		_, err = file.WriteString("Just a readme.")
+		if err != nil {
+			file.Close()
+			return 0, fmt.Errorf("failed to write to file: %w", err)
+		}
+		if err := file.Close(); err != nil {
+			return 0, fmt.Errorf("failed to close file: %w", err)
+		}
 	}
 
 	_, err = workTree.Add("readme.md")
 	if err != nil {
-		log.Fatal(err)
+		return 0, fmt.Errorf("failed to add readme.md to index: %w", err)
 	}
 
 	existingCommitSet, err := getAllExistingCommitSHAs(repo)
 	if err != nil {
-		log.Fatalf("Something went wrong with reading local commits: %v", err)
+		return 0, fmt.Errorf("failed to get existing commits: %w", err)
 	}
 
 	totalCommits := 0
@@ -117,14 +123,15 @@ func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) int {
 					Email: os.Getenv("COMMITER_EMAIL"),
 					When:  commit.AuthoredDate,
 				},
+				AllowEmptyCommits: true,
 			})
 			if err != nil {
-				log.Fatal(err)
+				return 0, fmt.Errorf("failed to create commit %s: %w", commit.ID, err)
 			}
 
 			obj, err := repo.CommitObject(newCommit)
 			if err != nil {
-				log.Fatal(err)
+				return 0, fmt.Errorf("failed to get commit object for %s: %w", newCommit, err)
 			}
 
 			log.Printf("Created commit: %s\n", obj.Hash)
@@ -133,7 +140,7 @@ func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) int {
 			log.Printf("Commit: %v is already imported \n", commit.ID)
 		}
 	}
-	return totalCommits
+	return totalCommits, nil
 }
 
 func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
