@@ -141,6 +141,7 @@ func GetProjectCommits(projectId int, userName string) ([]internal.Commit, error
 
 func FetchAllCommits(projectIds []int, commiterName string, commitChannel chan []internal.Commit) {
 	var wg sync.WaitGroup
+	validCommitsFound := false
 
 	for _, projectId := range projectIds {
 		wg.Add(1)
@@ -155,12 +156,17 @@ func FetchAllCommits(projectIds []int, commiterName string, commitChannel chan [
 			}
 			if len(commits) > 0 {
 				commitChannel <- commits
+				validCommitsFound = true
 			}
 
 		}(projectId)
 	}
 
 	wg.Wait()
-	close(commitChannel)
 
+	if !validCommitsFound {
+		log.Println("No valid commits found across any projects")
+	}
+
+	close(commitChannel)
 }

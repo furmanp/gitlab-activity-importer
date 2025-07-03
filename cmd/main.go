@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"os"
+
+	"sync"
 	"time"
 
 	"github.com/furmanp/gitlab-activity-importer/internal"
@@ -41,18 +43,29 @@ func main() {
 
 	commitChannel := make(chan []internal.Commit, len(projectIds))
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	totalCommitsCreated := 0
 	go func() {
+		defer wg.Done()
 		totalCommits := 0
 		for commits := range commitChannel {
 			localCommits := services.CreateLocalCommit(repo, commits)
 			totalCommits += localCommits
 		}
+		totalCommitsCreated = totalCommits
 		log.Printf("Imported %v commits.\n", totalCommits)
-
 	}()
 
 	services.FetchAllCommits(projectIds, os.Getenv("COMMITER_NAME"), commitChannel)
 
-	services.PushLocalCommits(repo)
+	wg.Wait()
+
+	if totalCommitsCreated > 0 {
+		services.PushLocalCommits(repo)
+	} else {
+		log.Println("No new commits were created, skipping push operation.")
+	}
 	log.Printf("Operation took: %v in total.", time.Since(startNow))
 }

@@ -72,6 +72,11 @@ func cloneRemoteRepo() (*git.Repository, error) {
 }
 
 func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) int {
+	if len(commits) == 0 {
+		log.Println("No commits to process")
+		return 0
+	}
+
 	workTree, err := repo.Worktree()
 	if err != nil {
 		log.Fatal(err)
