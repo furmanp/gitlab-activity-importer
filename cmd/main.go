@@ -11,6 +11,7 @@ import (
 	"github.com/furmanp/gitlab-activity-importer/internal/services"
 )
 
+// main is the entry point of the program. It checks environment variables, retrieves GitLab user and project information, fetches and processes commits concurrently, creates local commits in a repository, and pushes them to a remote repository if any new commits are created. The function logs progress and errors throughout the operation and reports the total duration upon completion.
 func main() {
 	startNow := time.Now()
 	err := internal.CheckEnvVariables()

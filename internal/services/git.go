@@ -34,6 +34,8 @@ func OpenOrInitClone() *git.Repository {
 	return repo
 }
 
+// cloneRemoteRepo clones a remote Git repository to a local directory, or initializes a new repository if the remote is empty.
+// It returns the local repository instance or an error if cloning or initialization fails.
 func cloneRemoteRepo() (*git.Repository, error) {
 	homeDir := internal.GetHomeDirectory() + "/commits-importer/"
 	repoURL := os.Getenv("ORIGIN_REPO_URL")
@@ -71,6 +73,8 @@ func cloneRemoteRepo() (*git.Repository, error) {
 	return repo, nil
 }
 
+// CreateLocalCommit creates new commits in the given repository for each commit in the provided slice that does not already exist.
+// It ensures a "readme.md" file is present and staged before committing. Returns the number of new commits created and an error if any operation fails.
 func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) (int, error) {
 	if len(commits) == 0 {
 		log.Println("No commits to process")
@@ -143,6 +147,8 @@ func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) (int, er
 	return totalCommits, nil
 }
 
+// getAllExistingCommitSHAs retrieves all commit messages from the repository's HEAD and returns them as a map for quick lookup.
+// Returns an empty map if the repository has no commits, or an error if retrieval fails.
 func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 	existingCommits := make(map[string]bool)
 	ref, err := repo.Reference("HEAD", true)
