@@ -2,7 +2,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23.1'
+          go-version: "1.23.1"
+
+      - name: Inject version into doc.go
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          sed -i.bak "s/{{VERSION}}/$VERSION/" commit-importer/doc.go
 
       - name: Build
         run: |
@@ -30,16 +35,19 @@ jobs:
           for platform in "${PLATFORMS[@]}"; do
             read -r os arch <<< "$platform"
             echo "Building for $os/$arch..."
-            
+
             binary_name="GitLab-Importer"
             if [ "$os" = "windows" ]; then
               binary_name="$binary_name.exe"
             fi
-            
-            GOOS=$os GOARCH=$arch go build -ldflags="-X main.Version=${GITHUB_REF#refs/tags/}" \
+
+            GOOS=$os GOARCH=$arch go build -ldflags="-X github.com/furmanp/gitlab-activity-importer.Version=${GITHUB_REF#refs/tags/}" \
               -o "build/$binary_name-$os-$arch$([[ $os = "windows" ]] && echo ".exe" || echo "")" \
               ./cmd/main.go
           done
+
+      - name: Cleanup doc.go backup
+        run: rm -f commit-importer/doc.go.bak
 
       - name: Create Archives
         run: |
@@ -56,15 +64,11 @@ jobs:
           echo "Latest commits:"
           git log --oneline -n 5
 
-      - name: Generate Changelog Notes
+      - name: Generate changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v2
+        uses: metcalfc/changelog-generator@v4.1.0
         with:
-          configuration: .github/release-changelog-config.yml
-          failOnError: false
-          ignorePreReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.ORIGIN_TOKEN }}
+          myToken: ${{ secrets.ORIGIN_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

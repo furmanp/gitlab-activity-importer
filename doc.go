@@ -21,4 +21,4 @@
 package gitlab_activity_importer
 
 // Version is the current version of the tool.
-var Version = "v1.2.2"
+var Version = "{{VERSION}}"
