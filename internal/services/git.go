@@ -41,7 +41,7 @@ func cloneRemoteRepo() (*git.Repository, error) {
 	repo, err := git.PlainClone(homeDir, false, &git.CloneOptions{
 		URL: repoURL,
 		Auth: &http.BasicAuth{
-			Username: os.Getenv("GITHUB_USERNAME"),
+			Username: os.Getenv("GH_USERNAME"),
 			Password: os.Getenv("ORIGIN_TOKEN"),
 		},
 		Progress: os.Stdout,
@@ -114,12 +114,12 @@ func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) (int, er
 		if !existingCommitSet[commit.ID] {
 			newCommit, err := workTree.Commit(commit.ID, &git.CommitOptions{
 				Author: &object.Signature{
-					Name:  os.Getenv("GITHUB_USERNAME"),
+					Name:  os.Getenv("GH_USERNAME"),
 					Email: os.Getenv("COMMITER_EMAIL"),
 					When:  commit.AuthoredDate,
 				},
 				Committer: &object.Signature{
-					Name:  os.Getenv("GITHUB_USERNAME"),
+					Name:  os.Getenv("GH_USERNAME"),
 					Email: os.Getenv("COMMITER_EMAIL"),
 					When:  commit.AuthoredDate,
 				},
@@ -173,7 +173,7 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 func PushLocalCommits(repo *git.Repository) {
 	err := repo.Push(&git.PushOptions{
 		Auth: &http.BasicAuth{
-			Username: os.Getenv("GITHUB_USERNAME"),
+			Username: os.Getenv("GH_USERNAME"),
 			Password: os.Getenv("ORIGIN_TOKEN"),
 		},
 		Progress: os.Stdout,

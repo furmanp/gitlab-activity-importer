@@ -11,7 +11,7 @@ import (
 func TestEnvironmentVariables(t *testing.T) {
 	envVars := []string{
 		"BASE_URL", "GITLAB_TOKEN", "GITLAB_USERNAME",
-		"GITHUB_USERNAME", "COMMITER_EMAIL", "ORIGIN_REPO_URL", "ORIGIN_TOKEN",
+		"GH_USERNAME", "COMMITER_EMAIL", "ORIGIN_REPO_URL", "ORIGIN_TOKEN",
 	}
 
 	for _, v := range envVars {
@@ -28,7 +28,7 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("BASE_URL", "https://gitlab.com")
 		os.Setenv("GITLAB_TOKEN", "token")
 		os.Setenv("GITLAB_USERNAME", "gitlab_user")
-		os.Setenv("GITHUB_USERNAME", "github_user")
+		os.Setenv("GH_USERNAME", "github_user")
 		os.Setenv("COMMITER_EMAIL", "user@example.com")
 		os.Setenv("ORIGIN_REPO_URL", "https://github.com/user/repo.git")
 		os.Setenv("ORIGIN_TOKEN", "token")
@@ -48,7 +48,7 @@ func TestEnvironmentVariables(t *testing.T) {
 
 		os.Setenv("BASE_URL", "https://gitlab.com")
 		os.Setenv("GITLAB_TOKEN", "token")
-		os.Setenv("GITHUB_USERNAME", "github_user")
+		os.Setenv("GH_USERNAME", "github_user")
 		os.Setenv("COMMITER_EMAIL", "user@example.com")
 		os.Setenv("ORIGIN_REPO_URL", "https://github.com/user/repo.git")
 		os.Setenv("ORIGIN_TOKEN", "token")

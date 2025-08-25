@@ -25,7 +25,7 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
           GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
-          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
           COMMITER_EMAIL: ${{ secrets.COMMITER_EMAIL }}
           ORIGIN_REPO_URL: ${{ secrets.ORIGIN_REPO_URL }}
           ORIGIN_TOKEN: ${{ secrets.ORIGIN_TOKEN }}
