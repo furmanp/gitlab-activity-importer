@@ -66,7 +66,7 @@ func TestCheckEnvVariables(t *testing.T) {
 				"BASE_URL": "http://test-url.com",
 			},
 			expectError: true,
-			errorMsg:    "GITLAB_USERNAME, GITHUB_USERNAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
+			errorMsg:    "GITLAB_TOKEN, GITLAB_USERNAME, GITHUB_USERNAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
 		},
 		{
 			name:        "no variables set",
