@@ -1,0 +1,87 @@
+name: Build and Release
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23.1"
+
+      - name: Inject version into doc.go
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          sed -i.bak "s/{{VERSION}}/$VERSION/" doc.go
+
+      - name: Build
+        run: |
+          PLATFORMS=("linux amd64" "windows amd64" "darwin amd64")
+
+          for platform in "${PLATFORMS[@]}"; do
+            read -r os arch <<< "$platform"
+            echo "Building for $os/$arch..."
+
+            binary_name="GitLab-Importer"
+            if [ "$os" = "windows" ]; then
+              binary_name="$binary_name.exe"
+            fi
+
+            GOOS=$os GOARCH=$arch go build -ldflags="-X github.com/furmanp/gitlab-activity-importer/gitlab_activity_importer.Version=${GITHUB_REF#refs/tags/}" \
+              -o "build/$binary_name-$os-$arch$([[ $os = "windows" ]] && echo ".exe" || echo "")" \
+              ./cmd/main.go
+          done
+
+      - name: Cleanup doc.go backup
+        run: rm -f doc.go.bak
+
+      - name: Create Archives
+        run: |
+          cd build
+          for file in GitLab-Importer-*; do
+            zip "${file}.zip" "$file"
+          done
+
+      - name: Debug Git Info
+        run: |
+          echo "Current tag: ${GITHUB_REF#refs/tags/}"
+          echo "All tags:"
+          git tag -l
+          echo "Latest commits:"
+          git log --oneline -n 5
+
+      - name: Generate changelog
+        id: changelog
+        uses: metcalfc/changelog-generator@v4.6.2
+        with:
+          myToken: ${{ secrets.ORIGIN_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: success()
+        with:
+          token: ${{ secrets.ORIGIN_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            ## What's Changed
+            ${{ steps.changelog.outputs.changelog }}
+
+            For full changelog, see the [commits](https://github.com/${{ github.repository }}/commits/${{ github.ref_name }})
+          draft: false
+          prerelease: false
+          files: build/*.zip

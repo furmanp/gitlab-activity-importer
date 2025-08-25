@@ -1,0 +1,33 @@
+name: Daily commit sync
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+  workflow_dispatch:
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.1'
+
+      - name: Build
+        run: go build -o importer ./cmd/main.go
+
+      - name: Run App
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
+          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          COMMITER_EMAIL: ${{ secrets.COMMITER_EMAIL }}
+          ORIGIN_REPO_URL: ${{ secrets.ORIGIN_REPO_URL }}
+          ORIGIN_TOKEN: ${{ secrets.ORIGIN_TOKEN }}
+          ENV: ${{ secrets.ENV }}
+        run: ./importer
