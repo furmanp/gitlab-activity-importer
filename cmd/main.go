@@ -61,7 +61,7 @@ func main() {
 		log.Printf("Imported %v commits.\n", totalCommits)
 	}()
 
-	services.FetchAllCommits(projectIds, os.Getenv("COMMITER_NAME"), commitChannel)
+	services.FetchAllCommits(projectIds, os.Getenv("GITLAB_USERNAME"), commitChannel)
 
 	wg.Wait()
 

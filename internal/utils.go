@@ -19,7 +19,8 @@ func CheckEnvVariables() error {
 	requiredEnvVars := []string{
 		"BASE_URL",
 		"GITLAB_TOKEN",
-		"COMMITER_NAME",
+		"GITLAB_USERNAME",
+		"GITHUB_USERNAME",
 		"COMMITER_EMAIL",
 		"ORIGIN_REPO_URL",
 		"ORIGIN_TOKEN",

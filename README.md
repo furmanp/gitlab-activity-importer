@@ -42,8 +42,9 @@ To do that follow these steps:
         | Secret Name       | Description                                                            |
         | ----------------- | ---------------------------------------------------------------------- |
         | `BASE_URL`        | URL of your GitLab instance (e.g., `https://gitlab.com`)               |
+        | `GITLAB_USERNAME` | Your GitLab username (for filtering commits)                           |
+        | `GITHUB_USERNAME` | Your GitHub username (for authentication and commit authoring)         |
         | `COMMITER_EMAIL`  | Email associated with your GitHub profile                              |
-        | `COMMITER_NAME`   | Your full name as it appears on GitHub                                 |
         | `GITLAB_TOKEN`    | GitLab personal access token (read permissions only)                   |
         | `ORIGIN_TOKEN`    | GitHub personal access token (with write permissions for auto-push)    |
         | `ORIGIN_REPO_URL` | HTTPS URL of your GitHub repository (ensure it has a `.git` extension) |
@@ -56,6 +57,8 @@ If you prefer to run the importer manually:
 2. Set up the same environment variables on your local machine:
 ```
 export BASE_URL=https://gitlab.com
+export GITLAB_USERNAME=your_gitlab_username
+export GITHUB_USERNAME=your_github_username
 export COMMITER_EMAIL=your_email@example.com
 ...
 ```

@@ -85,7 +85,7 @@ func GetUsersProjectsIds(userId int) ([]int, error) {
 	return projectIds, nil
 }
 
-func GetProjectCommits(projectId int, userName string) ([]internal.Commit, error) {
+func GetProjectCommits(projectId int, gitlabUserName string) ([]internal.Commit, error) {
 	url := os.Getenv("BASE_URL")
 	token := os.Getenv("GITLAB_TOKEN")
 
@@ -94,7 +94,7 @@ func GetProjectCommits(projectId int, userName string) ([]internal.Commit, error
 	page := 1
 
 	for {
-		req, err := http.NewRequest("GET", fmt.Sprintf("%v/api/v4/projects/%v/repository/commits?author=%v&per_page=100&page=%d", url, projectId, userName, page), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%v/api/v4/projects/%v/repository/commits?author=%v&per_page=100&page=%d", url, projectId, gitlabUserName, page), nil)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching the commits: %v", err)
 		}
@@ -139,7 +139,7 @@ func GetProjectCommits(projectId int, userName string) ([]internal.Commit, error
 	return allCommits, nil
 }
 
-func FetchAllCommits(projectIds []int, commiterName string, commitChannel chan []internal.Commit) {
+func FetchAllCommits(projectIds []int, gitlabUserName string, commitChannel chan []internal.Commit) {
 	var wg sync.WaitGroup
 	validCommitsFound := false
 
@@ -149,7 +149,7 @@ func FetchAllCommits(projectIds []int, commiterName string, commitChannel chan [
 		go func(projId int) {
 			defer wg.Done()
 
-			commits, err := GetProjectCommits(projId, commiterName)
+			commits, err := GetProjectCommits(projId, gitlabUserName)
 			if err != nil {
 				log.Printf("Error fetching commits for project %d: %v", projId, err)
 				return
