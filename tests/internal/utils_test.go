@@ -13,7 +13,8 @@ func clearEnvVars(t *testing.T) {
 		"ENV",
 		"BASE_URL",
 		"GITLAB_TOKEN",
-		"COMMITER_NAME",
+		"GITLAB_USERNAME",
+		"GITHUB_USERNAME",
 		"COMMITER_EMAIL",
 		"ORIGIN_REPO_URL",
 		"ORIGIN_TOKEN",
@@ -38,7 +39,8 @@ func TestCheckEnvVariables(t *testing.T) {
 			setupEnv: map[string]string{
 				"BASE_URL":        "http://test-url.com",
 				"GITLAB_TOKEN":    "token123",
-				"COMMITER_NAME":   "Test User",
+				"GITLAB_USERNAME": "gitlab_user",
+				"GITHUB_USERNAME": "github_user",
 				"COMMITER_EMAIL":  "test@example.com",
 				"ORIGIN_REPO_URL": "http://repo.com",
 				"ORIGIN_TOKEN":    "origintoken123",
@@ -50,7 +52,8 @@ func TestCheckEnvVariables(t *testing.T) {
 			setupEnv: map[string]string{
 				"BASE_URL":       "http://test-url.com",
 				"GITLAB_TOKEN":   "token123",
-				"COMMITER_NAME":  "Test User",
+				"GITLAB_USERNAME": "gitlab_user",
+				"GITHUB_USERNAME": "github_user",
 				"COMMITER_EMAIL": "test@example.com",
 				"ORIGIN_TOKEN":   "origintoken123",
 			},
@@ -63,13 +66,13 @@ func TestCheckEnvVariables(t *testing.T) {
 				"BASE_URL": "http://test-url.com",
 			},
 			expectError: true,
-			errorMsg:    "GITLAB_TOKEN, COMMITER_NAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
+			errorMsg:    "GITLAB_TOKEN, GITLAB_USERNAME, GITHUB_USERNAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
 		},
 		{
 			name:        "no variables set",
 			setupEnv:    map[string]string{},
 			expectError: true,
-			errorMsg:    "BASE_URL, GITLAB_TOKEN, COMMITER_NAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
+			errorMsg:    "BASE_URL, GITLAB_TOKEN, GITLAB_USERNAME, GITHUB_USERNAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
 		},
 	}
 
