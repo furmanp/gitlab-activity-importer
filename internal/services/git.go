@@ -170,6 +170,27 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 	return existingCommits, nil
 }
 
+func PullLatestChanges(repo *git.Repository) error {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	err = wt.Pull(&git.PullOptions{
+		RemoteName: "origin",
+		Auth: &http.BasicAuth{
+			Username: os.Getenv("GH_USERNAME"),
+			Password: os.Getenv("ORIGIN_TOKEN"),
+		},
+	})
+	if err != nil {
+		log.Println("No changes to pull or error occurred:", err)
+		return err
+	}
+
+	return nil
+}
+
 func PushLocalCommits(repo *git.Repository) {
 	err := repo.Push(&git.PushOptions{
 		Auth: &http.BasicAuth{

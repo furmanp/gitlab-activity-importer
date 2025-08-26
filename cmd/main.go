@@ -66,6 +66,7 @@ func main() {
 	wg.Wait()
 
 	if totalCommitsCreated > 0 {
+		services.PullLatestChanges(repo)
 		services.PushLocalCommits(repo)
 		log.Println("Successfully pushed commits to remote repository.")
 	} else {
