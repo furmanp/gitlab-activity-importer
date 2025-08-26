@@ -9,8 +9,10 @@ A tool to transfer your GitLab commit history to GitHub, reflecting your GitLab 
   - [Overview](#overview)
   - [Features](#features)
   - [Setup](#setup)
-    - [1. Automatic Imports (Recommended)](#1-automatic-imports-recommended)
-    - [2. Manual Imports](#2-manual-imports)
+    - [1. Environmental Variables](#1-environmental-variables)
+    - [2. Automatic Imports (Recommended)](#2-automatic-imports-recommended)
+    - [3. Manual Imports using repository](#3-manual-imports-using-repository)
+    - [4. Manual Imports using binary](#4-manual-imports-using-binary)
   - [Configuration](#configuration)
     - [Important Notes:](#important-notes)
   - [License](#license)
@@ -25,7 +27,19 @@ This tool fetches your commit history from private GitLab repositories and impor
 -	Secure Data Handling: Requires minimal permissions and uses GitHub repository secrets for configuration.
 
 ## Setup
-### 1. Automatic Imports (Recommended)
+### 1. Environmental Variables
+
+        | Secret Name       | Description                                                            |
+        | ----------------- | ---------------------------------------------------------------------- |
+        | `BASE_URL`        | URL of your GitLab instance (e.g., `https://gitlab.com`)               |
+        | `GITLAB_USERNAME` | Your GitLab username                                                   |
+        | `GH_USERNAME`     | Your GitHub username                                                   | 
+        | `COMMITER_EMAIL`  | Email associated with your GitHub profile                              |
+        | `GITLAB_TOKEN`    | GitLab personal access token (read permissions only)                   |
+        | `ORIGIN_TOKEN`    | GitHub personal access token (with write permissions for auto-push)    |
+        | `ORIGIN_REPO_URL` | HTTPS URL of your GitHub repository (ensure it has a `.git` extension) |
+
+### 2. Automatic Imports (Recommended)
 This approach will automatically keep your activity up to date. The program is being run daily at midnight UTC.
 It imports your latest commits and automatically pushes them to specified GitHub repository.
 
@@ -36,23 +50,21 @@ To do that follow these steps:
    - Go to your forked repository settings.
    - Under **Security**, navigate to **Secrets and variables > Actions**.
      ![Repository Secrets Configuration](assets/image.png)
-   - Add the following secrets:
+   - Add the secrets from section [1](#1-environmental-variables):
 
 
-        | Secret Name       | Description                                                            |
-        | ----------------- | ---------------------------------------------------------------------- |
-        | `BASE_URL`        | URL of your GitLab instance (e.g., `https://gitlab.com`)               |
-        | `GITLAB_USERNAME` | Your GitLab username (for filtering commits)                           |
-        | `GH_USERNAME` | Your GitHub username (for authentication and commit authoring)         |
-        | `COMMITER_EMAIL`  | Email associated with your GitHub profile                              |
-        | `GITLAB_TOKEN`    | GitLab personal access token (read permissions only)                   |
-        | `ORIGIN_TOKEN`    | GitHub personal access token (with write permissions for auto-push)    |
-        | `ORIGIN_REPO_URL` | HTTPS URL of your GitHub repository (ensure it has a `.git` extension) |
 
 Once these variables are saved in your Repository secrets, your commits will be automatically updated every day.
 
-### 2. Manual Imports
+### 3. Manual Imports using repository
+>You need to have GO installed on your computer
+
 If you prefer to run the importer manually:
+1. Clone the repository
+2. Create an `.env` file in the root of your project and provide necessary variables
+3. Run the tool locally whenever you want to sync your activity using `go run ./cmd/go/main.go
+
+### 4. Manual Imports using binary
 1. **Download the latest release** of the tool.
 2. Set up the same environment variables on your local machine:
 ```
@@ -62,7 +74,8 @@ export GH_USERNAME=your_github_username
 export COMMITER_EMAIL=your_email@example.com
 ...
 ```
-3. Run the tool locally whenever you want to sync your activity.
+3. Run the tool binary whenever you want to sync your activity.
+
 
 ## Configuration
 This project uses GitHub Actions to automate builds and daily synchronization:

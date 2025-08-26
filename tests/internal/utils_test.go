@@ -100,20 +100,3 @@ func TestCheckEnvVariables(t *testing.T) {
 		})
 	}
 }
-
-func TestCheckEnvVariables_Development(t *testing.T) {
-	clearEnvVars(t)
-
-	if err := os.Setenv("ENV", "DEVELOPMENT"); err != nil {
-		t.Fatalf("failed to set ENV: %v", err)
-	}
-
-	err := internal.SetupEnv()
-
-	if err == nil {
-		t.Error("expected error due to missing .env file but got none")
-	}
-	if err != nil && !strings.Contains(err.Error(), "error loading .env file") {
-		t.Errorf("unexpected error message: %v", err)
-	}
-}

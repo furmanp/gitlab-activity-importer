@@ -10,24 +10,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// LoadEnv tries to load .env from the project root.
-func LoadEnv() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	envPath := filepath.Join(wd, ".env")
-
-	if err := godotenv.Load(envPath); err != nil {
-		// match test expectation: "error loading..."
-		return fmt.Errorf("error loading .env file from %s: %w", envPath, err)
-	}
-
-	return nil
-}
-
-// CheckEnvVariables ensures required env variables are present.
 func CheckEnvVariables() error {
 	requiredEnvVars := []string{
 		"BASE_URL",
@@ -52,19 +34,33 @@ func CheckEnvVariables() error {
 	return nil
 }
 
-// SetupEnv loads .env if DEVELOPMENT, then checks variables.
-func SetupEnv() error {
-	if os.Getenv("ENV") == "DEVELOPMENT" {
-
-		if err := LoadEnv(); err != nil {
-			return fmt.Errorf("failed to load .env in DEVELOPMENT: %w", err)
-		}
+func LoadEnv() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
 	}
 
-	return CheckEnvVariables()
+	envPath := filepath.Join(wd, ".env")
+
+	if err := godotenv.Load(envPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error loading .env file from %s: %w", envPath, err)
+	}
+
+	return nil
 }
 
-// GetHomeDirectory is unrelated but kept as-is.
+func SetupEnv() error {
+	if err := LoadEnv(); err != nil {
+		log.Printf("Could not load .env file: %v.", err)
+	}
+
+	if err := CheckEnvVariables(); err != nil {
+		return fmt.Errorf("environment variable check failed: %w", err)
+	}
+
+	return nil
+}
+
 func GetHomeDirectory() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
