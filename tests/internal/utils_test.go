@@ -86,7 +86,7 @@ func TestCheckEnvVariables(t *testing.T) {
 				}
 			}
 
-			err := internal.LoadEnv()
+			err := internal.SetupEnv()
 
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
@@ -108,7 +108,7 @@ func TestCheckEnvVariables_Development(t *testing.T) {
 		t.Fatalf("failed to set ENV: %v", err)
 	}
 
-	err := internal.LoadEnv()
+	err := internal.SetupEnv()
 
 	if err == nil {
 		t.Error("expected error due to missing .env file but got none")

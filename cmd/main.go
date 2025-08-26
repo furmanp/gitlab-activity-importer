@@ -13,7 +13,7 @@ import (
 
 func main() {
 	startNow := time.Now()
-	err := internal.LoadEnv()
+	err := internal.SetupEnv()
 	if err != nil {
 		log.Fatalf("Error during loading environmental variables: %v", err)
 	}
