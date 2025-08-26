@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -170,7 +171,33 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 	return existingCommits, nil
 }
 
-func PushLocalCommits(repo *git.Repository) {
+func PullLatestChanges(repo *git.Repository) error {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	err = wt.Pull(&git.PullOptions{
+		RemoteName: "origin",
+		Auth: &http.BasicAuth{
+			Username: os.Getenv("GH_USERNAME"),
+			Password: os.Getenv("ORIGIN_TOKEN"),
+		},
+	})
+	if err != nil {
+		if err == git.NoErrAlreadyUpToDate {
+			log.Println("No changes to pull, working tree is up to date.")
+			return nil
+		} else {
+			log.Println("No changes to pull or error occurred:", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func PushLocalCommits(repo *git.Repository) error {
 	err := repo.Push(&git.PushOptions{
 		Auth: &http.BasicAuth{
 			Username: os.Getenv("GH_USERNAME"),
@@ -180,10 +207,11 @@ func PushLocalCommits(repo *git.Repository) {
 	})
 
 	if err != nil {
-		if err == git.NoErrAlreadyUpToDate {
+		if errors.Is(err, git.NoErrAlreadyUpToDate) {
 			log.Println("No changes to push, everything is up to date.")
-		} else {
-			log.Fatalf("Error pushing to Github: %v", err)
+			return nil
 		}
+		return fmt.Errorf("push to Github failed: %w", err)
 	}
+	return nil
 }
