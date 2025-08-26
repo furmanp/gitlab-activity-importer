@@ -4,41 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"path/filepath"
+	"runtime"
 
 	"github.com/joho/godotenv"
 )
-
-func CheckEnvVariables() error {
-	if os.Getenv("ENV") == "DEVELOPMENT" {
-		if err := godotenv.Load(); err != nil {
-			return fmt.Errorf("error loading .env file: %v", err)
-		}
-	}
-
-	requiredEnvVars := []string{
-		"BASE_URL",
-		"GITLAB_TOKEN",
-		"GITLAB_USERNAME",
-		"GH_USERNAME",
-		"COMMITER_EMAIL",
-		"ORIGIN_REPO_URL",
-		"ORIGIN_TOKEN",
-	}
-
-	var missingVars []string
-	for _, envVar := range requiredEnvVars {
-		if os.Getenv(envVar) == "" {
-			missingVars = append(missingVars, envVar)
-		}
-	}
-
-	if len(missingVars) > 0 {
-		return fmt.Errorf("missing required environment variables: %s", strings.Join(missingVars, ", "))
-	}
-
-	return nil
-}
 
 func GetHomeDirectory() string {
 	homeDir, err := os.UserHomeDir()
@@ -46,4 +16,19 @@ func GetHomeDirectory() string {
 		log.Fatal("Unable to get the user home directory:", err)
 	}
 	return homeDir
+}
+
+func LoadEnv() error {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return fmt.Errorf("could not get caller info")
+	}
+
+	currentDir := filepath.Dir(filename)
+	envPath := filepath.Join(currentDir, ".env")
+
+	if err := godotenv.Load(envPath); err != nil {
+		return fmt.Errorf("error loading .env file from %s: %w", envPath, err)
+	}
+	return nil
 }
