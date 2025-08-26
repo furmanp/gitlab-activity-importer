@@ -49,7 +49,7 @@ func GetUsersProjectsIds(userId int) ([]int, error) {
 	base := os.Getenv("BASE_URL")
 	token := os.Getenv("GITLAB_TOKEN")
 
-	var allProjectIds []int
+	allProjectIds := make([]int, 0, 128)
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	for page := 1; ; {
@@ -74,7 +74,7 @@ func GetUsersProjectsIds(userId int) ([]int, error) {
 
 			if res.StatusCode != http.StatusOK {
 				body, _ := io.ReadAll(res.Body)
-				err = fmt.Errorf("status %d: %s", res.StatusCode, string(body))
+				err = fmt.Errorf("request failed with status code: %d: %s", res.StatusCode, string(body))
 				return
 			}
 
@@ -82,7 +82,7 @@ func GetUsersProjectsIds(userId int) ([]int, error) {
 				ID int `json:"id"`
 			}
 			if derr := json.NewDecoder(res.Body).Decode(&projects); derr != nil {
-				err = fmt.Errorf("decode error: %w", derr)
+				err = fmt.Errorf("error parsing JSON: %w", derr)
 				return
 			}
 
@@ -134,12 +134,12 @@ func GetProjectCommits(projectId int, gitlabUserName string) ([]internal.Commit,
 			defer res.Body.Close()
 			if res.StatusCode != http.StatusOK {
 				body, _ := io.ReadAll(res.Body)
-				err = fmt.Errorf("status %d: %s", res.StatusCode, string(body))
+				err = fmt.Errorf("request failed with status code: %d: %s", res.StatusCode, string(body))
 				return
 			}
 			var batch []internal.Commit
 			if derr := json.NewDecoder(res.Body).Decode(&batch); derr != nil {
-				err = fmt.Errorf("decode error: %w", derr)
+				err = fmt.Errorf("error parsing JSON: %w", derr)
 				return
 			}
 

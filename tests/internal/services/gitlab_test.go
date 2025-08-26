@@ -271,7 +271,7 @@ func TestGetProjectsCommits(t *testing.T) {
 			responses:      [][]internal.Commit{nil},
 			statusCodes:    []int{401},
 			expectError:    true,
-			expectedErrMsg: "request failed with status code: 401",
+			expectedErrMsg: "request failed with status code: 401: null",
 		},
 		{
 			name:           "invalid json response",
@@ -321,6 +321,12 @@ func TestGetProjectsCommits(t *testing.T) {
 				}
 
 				w.Header().Set("Content-Type", "application/json")
+
+				if requestCount+1 < len(tt.statusCodes) {
+					w.Header().Set("X-Next-Page", fmt.Sprintf("%d", requestCount+2))
+				} else {
+					w.Header().Set("X-Next-Page", "")
+				}
 
 				if requestCount >= len(tt.statusCodes) {
 					t.Fatalf("More requests than expected status codes")
