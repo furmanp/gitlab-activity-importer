@@ -4,18 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 func CheckEnvVariables() error {
-	if os.Getenv("ENV") == "DEVELOPMENT" {
-		if err := godotenv.Load(); err != nil {
-			return fmt.Errorf("error loading .env file: %v", err)
-		}
-	}
-
 	requiredEnvVars := []string{
 		"BASE_URL",
 		"GITLAB_TOKEN",
@@ -35,6 +30,32 @@ func CheckEnvVariables() error {
 
 	if len(missingVars) > 0 {
 		return fmt.Errorf("missing required environment variables: %s", strings.Join(missingVars, ", "))
+	}
+	return nil
+}
+
+func LoadEnv() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	envPath := filepath.Join(wd, ".env")
+
+	if err := godotenv.Load(envPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error loading .env file from %s: %w", envPath, err)
+	}
+
+	return nil
+}
+
+func SetupEnv() error {
+	if err := LoadEnv(); err != nil {
+		log.Printf("Could not load .env file: %v.", err)
+	}
+
+	if err := CheckEnvVariables(); err != nil {
+		return fmt.Errorf("environment variable check failed: %w", err)
 	}
 
 	return nil

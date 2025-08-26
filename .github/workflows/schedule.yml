@@ -29,5 +29,4 @@ jobs:
           COMMITER_EMAIL: ${{ secrets.COMMITER_EMAIL }}
           ORIGIN_REPO_URL: ${{ secrets.ORIGIN_REPO_URL }}
           ORIGIN_TOKEN: ${{ secrets.ORIGIN_TOKEN }}
-          ENV: ${{ secrets.ENV }}
         run: ./importer

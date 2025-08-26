@@ -86,7 +86,7 @@ func TestCheckEnvVariables(t *testing.T) {
 				}
 			}
 
-			err := internal.CheckEnvVariables()
+			err := internal.SetupEnv()
 
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
@@ -98,22 +98,5 @@ func TestCheckEnvVariables(t *testing.T) {
 				t.Errorf("expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
 			}
 		})
-	}
-}
-
-func TestCheckEnvVariables_Development(t *testing.T) {
-	clearEnvVars(t)
-
-	if err := os.Setenv("ENV", "DEVELOPMENT"); err != nil {
-		t.Fatalf("failed to set ENV: %v", err)
-	}
-
-	err := internal.CheckEnvVariables()
-
-	if err == nil {
-		t.Error("expected error due to missing .env file but got none")
-	}
-	if err != nil && !strings.Contains(err.Error(), "error loading .env file") {
-		t.Errorf("unexpected error message: %v", err)
 	}
 }

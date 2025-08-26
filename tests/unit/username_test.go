@@ -33,7 +33,7 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("ORIGIN_REPO_URL", "https://github.com/user/repo.git")
 		os.Setenv("ORIGIN_TOKEN", "token")
 
-		err := internal.CheckEnvVariables()
+		err := internal.SetupEnv()
 
 		if err != nil {
 			t.Errorf("Expected no error when all variables are set, got: %v", err)
@@ -53,7 +53,7 @@ func TestEnvironmentVariables(t *testing.T) {
 		os.Setenv("ORIGIN_REPO_URL", "https://github.com/user/repo.git")
 		os.Setenv("ORIGIN_TOKEN", "token")
 
-		err := internal.CheckEnvVariables()
+		err := internal.SetupEnv()
 
 		if err == nil {
 			t.Error("Expected error when GITLAB_USERNAME is missing")
