@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -16,10 +17,13 @@ func LoadEnv() error {
 		return fmt.Errorf("failed to get working directory: %w", err)
 	}
 
-	envPath := wd + "/.env"
+	envPath := filepath.Join(wd, ".env")
+
 	if err := godotenv.Load(envPath); err != nil {
-		return fmt.Errorf("failed to load .env file from %s: %w", envPath, err)
+		// match test expectation: "error loading..."
+		return fmt.Errorf("error loading .env file from %s: %w", envPath, err)
 	}
+
 	return nil
 }
 
