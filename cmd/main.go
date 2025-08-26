@@ -24,10 +24,9 @@ func main() {
 		log.Fatalf("Error during reading GitLab User data: %v", err)
 	}
 
-	gitLabUserId := gitlabUser.ID
+	gitLabUserID := gitlabUser.ID
 
-	var projectIds []int
-	projectIds, err = services.GetUsersProjectsIds(gitLabUserId)
+	projectIds, err := services.GetUsersProjectsIds(gitLabUserID)
 
 	if err != nil {
 		log.Fatalf("Error during getting users projects: %v", err)
@@ -37,9 +36,14 @@ func main() {
 		return
 	}
 
-	log.Printf("Found contributions in %v projects \n", len(projectIds))
+	log.Printf("Found contributions in %d projects", len(projectIds))
 
 	repo := services.OpenOrInitClone()
+
+	err = services.PullLatestChanges(repo)
+	if err != nil {
+		log.Fatalf("Error pulling latest changes: %v", err)
+	}
 
 	commitChannel := make(chan []internal.Commit, len(projectIds))
 
@@ -66,8 +70,10 @@ func main() {
 	wg.Wait()
 
 	if totalCommitsCreated > 0 {
-		services.PullLatestChanges(repo)
-		services.PushLocalCommits(repo)
+		if err := services.PushLocalCommits(repo); err != nil {
+			log.Fatalf("Error pushing local commits: %v", err)
+			return
+		}
 		log.Println("Successfully pushed commits to remote repository.")
 	} else {
 		log.Println("No new commits were created, skipping push operation.")

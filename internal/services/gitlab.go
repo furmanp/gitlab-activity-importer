@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"sync"
@@ -118,9 +119,9 @@ func GetProjectCommits(projectId int, gitlabUserName string) ([]internal.Commit,
 	for page := 1; ; {
 		req, err := http.NewRequestWithContext(context.Background(), "GET",
 			fmt.Sprintf("%s/api/v4/projects/%d/repository/commits?author=%s&per_page=100&page=%d",
-				base, projectId, gitlabUserName, page), nil)
+				base, projectId, url.QueryEscape(gitlabUserName), page), nil)
 		if err != nil {
-			return nil, fmt.Errorf("build request: %w", err)
+			return nil, fmt.Errorf("error fetching the commits: %w", err)
 		}
 		req.Header.Set("PRIVATE-TOKEN", token)
 
