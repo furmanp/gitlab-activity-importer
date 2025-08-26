@@ -40,7 +40,7 @@ func TestCheckEnvVariables(t *testing.T) {
 				"BASE_URL":        "http://test-url.com",
 				"GITLAB_TOKEN":    "token123",
 				"GITLAB_USERNAME": "gitlab_user",
-				"GH_USERNAME": "github_user",
+				"GH_USERNAME":     "github_user",
 				"COMMITER_EMAIL":  "test@example.com",
 				"ORIGIN_REPO_URL": "http://repo.com",
 				"ORIGIN_TOKEN":    "origintoken123",
@@ -50,12 +50,12 @@ func TestCheckEnvVariables(t *testing.T) {
 		{
 			name: "missing one variable",
 			setupEnv: map[string]string{
-				"BASE_URL":       "http://test-url.com",
-				"GITLAB_TOKEN":   "token123",
+				"BASE_URL":        "http://test-url.com",
+				"GITLAB_TOKEN":    "token123",
 				"GITLAB_USERNAME": "gitlab_user",
-				"GH_USERNAME": "github_user",
-				"COMMITER_EMAIL": "test@example.com",
-				"ORIGIN_TOKEN":   "origintoken123",
+				"GH_USERNAME":     "github_user",
+				"COMMITER_EMAIL":  "test@example.com",
+				"ORIGIN_TOKEN":    "origintoken123",
 			},
 			expectError: true,
 			errorMsg:    "ORIGIN_REPO_URL",
@@ -86,7 +86,7 @@ func TestCheckEnvVariables(t *testing.T) {
 				}
 			}
 
-			err := internal.CheckEnvVariables()
+			err := internal.LoadEnv()
 
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
@@ -108,7 +108,7 @@ func TestCheckEnvVariables_Development(t *testing.T) {
 		t.Fatalf("failed to set ENV: %v", err)
 	}
 
-	err := internal.CheckEnvVariables()
+	err := internal.LoadEnv()
 
 	if err == nil {
 		t.Error("expected error due to missing .env file but got none")
