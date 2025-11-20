@@ -26,7 +26,7 @@ jobs:
       - name: Inject version into doc.go
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
-          sed -i.bak "s/{{VERSION}}/$VERSION/" doc.go
+          sed -i.bak "s|{{VERSION}}|$VERSION|" doc.go
 
       - name: Build
         run: |
