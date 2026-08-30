@@ -46,13 +46,14 @@ It imports your latest commits and automatically pushes them to specified GitHub
 To do that follow these steps:
 1. **Fork this repository** to your GitHub account.
 2. **Create an empty repository** in your GitHub profile where the commits will be pushed.
+   The repository can be completely empty; the importer creates the first commit on a `main` branch itself.
 3. **Configure repository secrets** in your forked repository:
    - Go to your forked repository settings.
    - Under **Security**, navigate to **Secrets and variables > Actions**.
      ![Repository Secrets Configuration](assets/image.png)
    - Add the secrets from section [1](#1-environmental-variables):
-
-
+4. **Enable GitHub Actions in your fork.** Open the **Actions** tab of the fork and confirm
+   that workflows are enabled — GitHub does not run them in a new fork until you do.
 
 Once these variables are saved in your Repository secrets, your commits will be automatically updated every day.
 
@@ -62,7 +63,7 @@ Once these variables are saved in your Repository secrets, your commits will be 
 If you prefer to run the importer manually:
 1. Clone the repository
 2. Create an `.env` file in the root of your project and provide necessary variables
-3. Run the tool locally whenever you want to sync your activity using `go run ./cmd/go/main.go
+3. Run the tool locally whenever you want to sync your activity using `go run ./cmd/main.go`
 
 ### 4. Manual Imports using binary
 1. **Download the latest release** of the tool.
