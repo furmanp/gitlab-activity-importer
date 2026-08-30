@@ -15,12 +15,14 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+const defaultBranch = "main"
+
 func OpenOrInitClone() *git.Repository {
 	repoPath := internal.GetHomeDirectory() + "/commits-importer/"
 
 	repo, err := git.PlainOpen(repoPath)
 	if err != nil {
-		if err == git.ErrRepositoryNotExists {
+		if errors.Is(err, git.ErrRepositoryNotExists) {
 			log.Println("Repository doesn't exist. Cloning new repository from remote.")
 			repo, err = cloneRemoteRepo()
 			if err != nil {
@@ -49,11 +51,17 @@ func cloneRemoteRepo() (*git.Repository, error) {
 	})
 
 	if err != nil {
-		if err == transport.ErrEmptyRemoteRepository {
+		if errors.Is(err, transport.ErrEmptyRemoteRepository) {
+			log.Println("Remote repository is empty. Initializing a new local repository.")
 			newRepo, initErr := git.PlainInit(homeDir, false)
 			if initErr != nil {
 				_ = os.RemoveAll(homeDir)
 				return nil, initErr
+			}
+			headRef := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.NewBranchReferenceName(defaultBranch))
+			if refErr := newRepo.Storer.SetReference(headRef); refErr != nil {
+				_ = os.RemoveAll(homeDir)
+				return nil, fmt.Errorf("failed to set HEAD to %s: %w", defaultBranch, refErr)
 			}
 
 			_, remoteErr := newRepo.CreateRemote(&config.RemoteConfig{
@@ -171,10 +179,17 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 	return existingCommits, nil
 }
 
+func nothingToPull(err error) bool {
+	return errors.Is(err, git.NoErrAlreadyUpToDate) ||
+		errors.Is(err, transport.ErrEmptyRemoteRepository) ||
+		errors.Is(err, git.ErrRemoteNotFound) ||
+		errors.Is(err, plumbing.ErrReferenceNotFound)
+}
+
 func PullLatestChanges(repo *git.Repository) error {
 	wt, err := repo.Worktree()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get worktree: %w", err)
 	}
 
 	err = wt.Pull(&git.PullOptions{
@@ -184,17 +199,15 @@ func PullLatestChanges(repo *git.Repository) error {
 			Password: os.Getenv("ORIGIN_TOKEN"),
 		},
 	})
-	if err != nil {
-		if err == git.NoErrAlreadyUpToDate {
-			log.Println("No changes to pull, working tree is up to date.")
-			return nil
-		} else {
-			log.Println("No changes to pull or error occurred:", err)
-			return err
-		}
+	if err == nil {
+		return nil
+	}
+	if nothingToPull(err) {
+		log.Printf("Nothing to pull (%v). Continuing.", err)
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("failed to pull from origin: %w", err)
 }
 
 func PushLocalCommits(repo *git.Repository) error {
