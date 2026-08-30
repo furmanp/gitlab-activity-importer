@@ -109,24 +109,35 @@ func TestImportAndPushToEmptyRemote(t *testing.T) {
 func TestSecondRunIsIdempotent(t *testing.T) {
 	setupEmptyRemote(t)
 
-	repo := services.OpenOrInitClone()
-	if err := services.PullLatestChanges(repo); err != nil {
-		t.Fatalf("PullLatestChanges: %v", err)
-	}
-
 	commits := []internal.Commit{
 		{ID: "aaa111", AuthoredDate: time.Date(2025, 3, 1, 9, 0, 0, 0, time.UTC)},
+		{ID: "bbb222", AuthoredDate: time.Date(2025, 3, 2, 9, 0, 0, 0, time.UTC)},
 	}
 
-	if _, err := services.CreateLocalCommit(repo, commits); err != nil {
-		t.Fatalf("first import: %v", err)
+	first := services.OpenOrInitClone()
+	if err := services.PullLatestChanges(first); err != nil {
+		t.Fatalf("first run, PullLatestChanges: %v", err)
 	}
-
-	created, err := services.CreateLocalCommit(repo, commits)
+	created, err := services.CreateLocalCommit(first, commits)
 	if err != nil {
-		t.Fatalf("second import: %v", err)
+		t.Fatalf("first run, CreateLocalCommit: %v", err)
+	}
+	if created != len(commits) {
+		t.Fatalf("first run created %d commits, want %d", created, len(commits))
+	}
+	if err := services.PushLocalCommits(first); err != nil {
+		t.Fatalf("first run, PushLocalCommits: %v", err)
+	}
+
+	second := services.OpenOrInitClone()
+	if err := services.PullLatestChanges(second); err != nil {
+		t.Fatalf("second run, PullLatestChanges: %v", err)
+	}
+	created, err = services.CreateLocalCommit(second, commits)
+	if err != nil {
+		t.Fatalf("second run, CreateLocalCommit: %v", err)
 	}
 	if created != 0 {
-		t.Errorf("second import created %d commits, want 0", created)
+		t.Errorf("second run created %d commits, want 0", created)
 	}
 }

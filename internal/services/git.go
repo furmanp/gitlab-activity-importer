@@ -156,15 +156,15 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 	existingCommits := make(map[string]bool)
 	ref, err := repo.Reference("HEAD", true)
 	if err != nil {
-		if err == plumbing.ErrReferenceNotFound {
+		if errors.Is(err, plumbing.ErrReferenceNotFound) {
 			return existingCommits, nil
 		}
-		return nil, fmt.Errorf("failed to get HEAD reference: %v", err)
+		return nil, fmt.Errorf("failed to get HEAD reference: %w", err)
 	}
 
 	iter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get commit log: %v", err)
+		return nil, fmt.Errorf("failed to get commit log: %w", err)
 	}
 	defer iter.Close()
 
@@ -173,7 +173,7 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to iterate commits: %v", err)
+		return nil, fmt.Errorf("failed to iterate commits: %w", err)
 	}
 
 	return existingCommits, nil
@@ -182,7 +182,6 @@ func getAllExistingCommitSHAs(repo *git.Repository) (map[string]bool, error) {
 func nothingToPull(err error) bool {
 	return errors.Is(err, git.NoErrAlreadyUpToDate) ||
 		errors.Is(err, transport.ErrEmptyRemoteRepository) ||
-		errors.Is(err, git.ErrRemoteNotFound) ||
 		errors.Is(err, plumbing.ErrReferenceNotFound)
 }
 
