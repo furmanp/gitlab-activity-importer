@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"sync"
 	"time"
@@ -13,12 +12,18 @@ import (
 
 func main() {
 	startNow := time.Now()
-	err := internal.SetupEnv()
+
+	err := internal.LoadEnv()
 	if err != nil {
-		log.Fatalf("Error during loading environmental variables: %v", err)
+		log.Fatalf("Error loading .env file: %v", err)
 	}
 
-	gitlabUser, err := services.GetGitlabUser()
+	config, err := internal.Load()
+	if err != nil {
+		log.Fatalf("Error loading configuration: %v", err)
+	}
+
+	gitlabUser, err := services.GetGitlabUser(config.BaseURL)
 
 	if err != nil {
 		log.Fatalf("Error during reading GitLab User data: %v", err)
@@ -26,7 +31,7 @@ func main() {
 
 	gitLabUserID := gitlabUser.ID
 
-	projectIds, err := services.GetUsersProjectsIds(gitLabUserID)
+	projectIds, err := services.GetUsersProjectsIds(gitLabUserID, config.BaseURL, config.GitlabToken)
 
 	if err != nil {
 		log.Fatalf("Error during getting users projects: %v", err)
@@ -40,7 +45,7 @@ func main() {
 
 	repo := services.OpenOrInitClone()
 
-	err = services.PullLatestChanges(repo)
+	err = services.PullLatestChanges(repo, config)
 	if err != nil {
 		log.Fatalf("Error pulling latest changes: %v", err)
 	}
@@ -55,7 +60,7 @@ func main() {
 		defer wg.Done()
 		totalCommits := 0
 		for commits := range commitChannel {
-			if localCommits, err := services.CreateLocalCommit(repo, commits); err == nil {
+			if localCommits, err := services.CreateLocalCommit(repo, commits, config); err == nil {
 				totalCommits += localCommits
 			} else {
 				log.Printf("Error creating local commit: %v", err)
@@ -65,12 +70,12 @@ func main() {
 		log.Printf("Imported %v commits.\n", totalCommits)
 	}()
 
-	services.FetchAllCommits(projectIds, os.Getenv("GITLAB_USERNAME"), commitChannel)
+	services.FetchAllCommits(projectIds, config.GitlabUsername, commitChannel, config.BaseURL, config.GitlabToken)
 
 	wg.Wait()
 
 	if totalCommitsCreated > 0 {
-		if err := services.PushLocalCommits(repo); err != nil {
+		if err := services.PushLocalCommits(repo, config); err != nil {
 			log.Fatalf("Error pushing local commits: %v", err)
 			return
 		}
