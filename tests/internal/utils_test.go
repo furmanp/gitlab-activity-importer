@@ -1,101 +1,122 @@
-package services_test
+package internal_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/furmanp/gitlab-activity-importer/internal"
 )
 
-func clearEnvVars(t *testing.T) {
-	vars := []string{
-		"ENV",
-		"BASE_URL",
-		"GITLAB_TOKEN",
-		"GITLAB_USERNAME",
-		"GH_USERNAME",
-		"COMMITER_EMAIL",
-		"ORIGIN_REPO_URL",
-		"ORIGIN_TOKEN",
-	}
+var allEnvVars = []string{
+	"BASE_URL",
+	"GITLAB_TOKEN",
+	"GITLAB_USERNAME",
+	"GH_USERNAME",
+	"COMMITER_EMAIL",
+	"ORIGIN_REPO_URL",
+	"ORIGIN_TOKEN",
+}
 
-	for _, v := range vars {
-		if err := os.Unsetenv(v); err != nil {
-			t.Fatalf("failed to unset %s: %v", v, err)
-		}
+func fullEnv() map[string]string {
+	return map[string]string{
+		"BASE_URL":        "http://base-url-value.com",
+		"GITLAB_TOKEN":    "gitlab-token-value",
+		"GITLAB_USERNAME": "gitlab-username-value",
+		"GH_USERNAME":     "gh-username-value",
+		"COMMITER_EMAIL":  "commiter-email-value",
+		"ORIGIN_REPO_URL": "http://origin-repo-url-value.com",
+		"ORIGIN_TOKEN":    "origin-token-value",
 	}
 }
 
-func TestCheckEnvVariables(t *testing.T) {
+func applyEnv(t *testing.T, env map[string]string) {
+	t.Helper()
+	for _, name := range allEnvVars {
+		t.Setenv(name, env[name])
+	}
+}
+
+func TestLoadMapsEveryVariableToItsField(t *testing.T) {
+	env := fullEnv()
+	applyEnv(t, env)
+
+	got, err := internal.Load()
+	if err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	want := internal.Config{
+		BaseURL:        env["BASE_URL"],
+		GitlabUsername: env["GITLAB_USERNAME"],
+		GitlabToken:    env["GITLAB_TOKEN"],
+		GithubUsername: env["GH_USERNAME"],
+		CommitterEmail: env["COMMITER_EMAIL"],
+		OriginRepoURL:  env["ORIGIN_REPO_URL"],
+		OriginToken:    env["ORIGIN_TOKEN"],
+	}
+
+	if got != want {
+		t.Errorf("Load() = %+v, want %+v", got, want)
+	}
+}
+
+func TestLoadReportsMissingVariables(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupEnv    map[string]string
-		expectError bool
-		errorMsg    string
+		name    string
+		missing []string
 	}{
 		{
 			name: "all required variables set",
-			setupEnv: map[string]string{
-				"BASE_URL":        "http://test-url.com",
-				"GITLAB_TOKEN":    "token123",
-				"GITLAB_USERNAME": "gitlab_user",
-				"GH_USERNAME":     "github_user",
-				"COMMITER_EMAIL":  "test@example.com",
-				"ORIGIN_REPO_URL": "http://repo.com",
-				"ORIGIN_TOKEN":    "origintoken123",
-			},
-			expectError: false,
 		},
 		{
-			name: "missing one variable",
-			setupEnv: map[string]string{
-				"BASE_URL":        "http://test-url.com",
-				"GITLAB_TOKEN":    "token123",
-				"GITLAB_USERNAME": "gitlab_user",
-				"GH_USERNAME":     "github_user",
-				"COMMITER_EMAIL":  "test@example.com",
-				"ORIGIN_TOKEN":    "origintoken123",
-			},
-			expectError: true,
-			errorMsg:    "ORIGIN_REPO_URL",
+			name:    "missing one variable",
+			missing: []string{"ORIGIN_REPO_URL"},
 		},
 		{
-			name: "missing multiple variables",
-			setupEnv: map[string]string{
-				"BASE_URL": "http://test-url.com",
-			},
-			expectError: true,
-			errorMsg:    "GITLAB_TOKEN, GITLAB_USERNAME, GH_USERNAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
+			name:    "missing multiple variables",
+			missing: []string{"GITLAB_TOKEN", "GITLAB_USERNAME", "GH_USERNAME", "COMMITER_EMAIL", "ORIGIN_REPO_URL", "ORIGIN_TOKEN"},
 		},
 		{
-			name:        "no variables set",
-			setupEnv:    map[string]string{},
-			expectError: true,
-			errorMsg:    "BASE_URL, GITLAB_TOKEN, GITLAB_USERNAME, GH_USERNAME, COMMITER_EMAIL, ORIGIN_REPO_URL, ORIGIN_TOKEN",
+			name:    "no variables set",
+			missing: allEnvVars,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			clearEnvVars(t)
+			missing := make(map[string]bool, len(tt.missing))
+			env := fullEnv()
+			for _, name := range tt.missing {
+				missing[name] = true
+				delete(env, name)
+			}
+			applyEnv(t, env)
 
-			for k, v := range tt.setupEnv {
-				if err := os.Setenv(k, v); err != nil {
-					t.Fatalf("failed to set %s: %v", k, err)
+			got, err := internal.Load()
+
+			if len(tt.missing) == 0 {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatal("expected an error but got none")
+			}
+
+			for _, name := range allEnvVars {
+				named := strings.Contains(err.Error(), name)
+				if missing[name] && !named {
+					t.Errorf("error should name the missing %s, got: %v", name, err)
+				}
+				if !missing[name] && named {
+					t.Errorf("error names %s, which was set: %v", name, err)
 				}
 			}
 
-			err := internal.SetupEnv()
-
-			if tt.expectError && err == nil {
-				t.Error("expected error but got none")
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-			if tt.expectError && err != nil && !strings.Contains(err.Error(), tt.errorMsg) {
-				t.Errorf("expected error message to contain '%s', got '%s'", tt.errorMsg, err.Error())
+			if got != (internal.Config{}) {
+				t.Errorf("expected a zero Config alongside the error, got %+v", got)
 			}
 		})
 	}

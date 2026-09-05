@@ -80,7 +80,7 @@ func cloneRemoteRepo() (*git.Repository, error) {
 	return repo, nil
 }
 
-func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) (int, error) {
+func CreateLocalCommit(repo *git.Repository, commits []internal.Commit, config internal.Config) (int, error) {
 	if len(commits) == 0 {
 		log.Println("No commits to process")
 		return 0, nil
@@ -123,13 +123,13 @@ func CreateLocalCommit(repo *git.Repository, commits []internal.Commit) (int, er
 		if !existingCommitSet[commit.ID] {
 			newCommit, err := workTree.Commit(commit.ID, &git.CommitOptions{
 				Author: &object.Signature{
-					Name:  os.Getenv("GH_USERNAME"),
-					Email: os.Getenv("COMMITER_EMAIL"),
+					Name:  config.GithubUsername,
+					Email: config.CommitterEmail,
 					When:  commit.AuthoredDate,
 				},
 				Committer: &object.Signature{
-					Name:  os.Getenv("GH_USERNAME"),
-					Email: os.Getenv("COMMITER_EMAIL"),
+					Name:  config.GithubUsername,
+					Email: config.CommitterEmail,
 					When:  commit.AuthoredDate,
 				},
 				AllowEmptyCommits: true,
@@ -185,7 +185,7 @@ func nothingToPull(err error) bool {
 		errors.Is(err, plumbing.ErrReferenceNotFound)
 }
 
-func PullLatestChanges(repo *git.Repository) error {
+func PullLatestChanges(repo *git.Repository, config internal.Config) error {
 	wt, err := repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("failed to get worktree: %w", err)
@@ -194,8 +194,8 @@ func PullLatestChanges(repo *git.Repository) error {
 	err = wt.Pull(&git.PullOptions{
 		RemoteName: "origin",
 		Auth: &http.BasicAuth{
-			Username: os.Getenv("GH_USERNAME"),
-			Password: os.Getenv("ORIGIN_TOKEN"),
+			Username: config.GithubUsername,
+			Password: config.OriginToken,
 		},
 	})
 	if err == nil {
@@ -209,11 +209,11 @@ func PullLatestChanges(repo *git.Repository) error {
 	return fmt.Errorf("failed to pull from origin: %w", err)
 }
 
-func PushLocalCommits(repo *git.Repository) error {
+func PushLocalCommits(repo *git.Repository, config internal.Config) error {
 	err := repo.Push(&git.PushOptions{
 		Auth: &http.BasicAuth{
-			Username: os.Getenv("GH_USERNAME"),
-			Password: os.Getenv("ORIGIN_TOKEN"),
+			Username: config.GithubUsername,
+			Password: config.OriginToken,
 		},
 		Progress: os.Stdout,
 	})

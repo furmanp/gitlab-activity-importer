@@ -17,11 +17,9 @@ import (
 	"github.com/furmanp/gitlab-activity-importer/internal"
 )
 
-func GetGitlabUser() (internal.GitLabUser, error) {
-	url := os.Getenv("BASE_URL")
-
+func GetGitlabUser(baseUrl string) (internal.GitLabUser, error) {
 	client := &http.Client{Timeout: 30 * time.Second}
-	req, err := http.NewRequestWithContext(context.Background(), "GET", fmt.Sprintf("%v/api/v4/user", url), nil)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", fmt.Sprintf("%v/api/v4/user", baseUrl), nil)
 	if err != nil {
 		return internal.GitLabUser{}, fmt.Errorf("failed to create request: %v", err)
 	}
@@ -46,17 +44,14 @@ func GetGitlabUser() (internal.GitLabUser, error) {
 	return user, nil
 }
 
-func GetUsersProjectsIds(userId int) ([]int, error) {
-	base := os.Getenv("BASE_URL")
-	token := os.Getenv("GITLAB_TOKEN")
-
+func GetUsersProjectsIds(userId int, baseUrl string, token string) ([]int, error) {
 	allProjectIds := make([]int, 0, 128)
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	for page := 1; ; {
 		req, err := http.NewRequestWithContext(context.Background(),
 			"GET",
-			fmt.Sprintf("%s/api/v4/users/%d/contributed_projects?per_page=100&page=%d", base, userId, page),
+			fmt.Sprintf("%s/api/v4/users/%d/contributed_projects?per_page=100&page=%d", baseUrl, userId, page),
 			nil,
 		)
 		if err != nil {
@@ -110,16 +105,13 @@ func GetUsersProjectsIds(userId int) ([]int, error) {
 	return allProjectIds, nil
 }
 
-func GetProjectCommits(projectId int, gitlabUserName string) ([]internal.Commit, error) {
-	base := os.Getenv("BASE_URL")
-	token := os.Getenv("GITLAB_TOKEN")
-
+func GetProjectCommits(projectId int, gitlabUserName string, baseUrl string, token string) ([]internal.Commit, error) {
 	var allCommits []internal.Commit
 	client := &http.Client{Timeout: 30 * time.Second}
 	for page := 1; ; {
 		req, err := http.NewRequestWithContext(context.Background(), "GET",
 			fmt.Sprintf("%s/api/v4/projects/%d/repository/commits?author=%s&per_page=100&page=%d",
-				base, projectId, url.QueryEscape(gitlabUserName), page), nil)
+				baseUrl, projectId, url.QueryEscape(gitlabUserName), page), nil)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching the commits: %w", err)
 		}
@@ -165,7 +157,7 @@ func GetProjectCommits(projectId int, gitlabUserName string) ([]internal.Commit,
 	return allCommits, nil
 }
 
-func FetchAllCommits(projectIds []int, gitlabUserName string, commitChannel chan []internal.Commit) {
+func FetchAllCommits(projectIds []int, gitlabUserName string, commitChannel chan []internal.Commit, baseUrl string, token string) {
 	var wg sync.WaitGroup
 	var validCommitsFound atomic.Bool
 
@@ -175,7 +167,7 @@ func FetchAllCommits(projectIds []int, gitlabUserName string, commitChannel chan
 		go func(projId int) {
 			defer wg.Done()
 
-			commits, err := GetProjectCommits(projId, gitlabUserName)
+			commits, err := GetProjectCommits(projId, gitlabUserName, baseUrl, token)
 			if err != nil {
 				log.Printf("Error fetching commits for project %d: %v", projId, err)
 				return

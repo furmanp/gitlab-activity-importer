@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -51,12 +50,7 @@ func TestGetGitlabUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.token != "" {
-				os.Setenv("GITLAB_TOKEN", tt.token)
-			} else {
-				os.Unsetenv("GITLAB_TOKEN")
-			}
-			defer os.Unsetenv("GITLAB_TOKEN")
+			t.Setenv("GITLAB_TOKEN", tt.token)
 
 			mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != http.MethodGet {
@@ -74,10 +68,7 @@ func TestGetGitlabUser(t *testing.T) {
 			}))
 			defer mockServer.Close()
 
-			os.Setenv("BASE_URL", mockServer.URL)
-			defer os.Unsetenv("BASE_URL")
-
-			result, err := services.GetGitlabUser()
+			result, err := services.GetGitlabUser(mockServer.URL)
 
 			if tt.expectError {
 				if err == nil {
@@ -97,6 +88,8 @@ func TestGetGitlabUser(t *testing.T) {
 	}
 }
 func TestGetUsersProjectsIds(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		userId           int
@@ -138,10 +131,7 @@ func TestGetUsersProjectsIds(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Setenv("BASE_URL", "http://test-url.com")
-			os.Setenv("GITLAB_TOKEN", "test-token")
-			defer os.Unsetenv("BASE_URL")
-			defer os.Unsetenv("GITLAB_TOKEN")
+			t.Parallel()
 
 			mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				expectedURL := fmt.Sprintf("/api/v4/users/%d/contributed_projects", tt.userId)
@@ -163,9 +153,7 @@ func TestGetUsersProjectsIds(t *testing.T) {
 			}))
 			defer mockServer.Close()
 
-			os.Setenv("BASE_URL", mockServer.URL)
-
-			result, err := services.GetUsersProjectsIds(tt.userId)
+			result, err := services.GetUsersProjectsIds(tt.userId, mockServer.URL, "test-token")
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected an error but got none")
@@ -184,6 +172,8 @@ func TestGetUsersProjectsIds(t *testing.T) {
 }
 
 func TestGetProjectsCommits(t *testing.T) {
+	t.Parallel()
+
 	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name           string
@@ -286,10 +276,7 @@ func TestGetProjectsCommits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Setenv("BASE_URL", "http://test-url.com")
-			os.Setenv("GITLAB_TOKEN", "test-token")
-			defer os.Unsetenv("BASE_URL")
-			defer os.Unsetenv("GITLAB_TOKEN")
+			t.Parallel()
 
 			requestCount := 0
 
@@ -350,9 +337,7 @@ func TestGetProjectsCommits(t *testing.T) {
 			}))
 			defer mockServer.Close()
 
-			os.Setenv("BASE_URL", mockServer.URL)
-
-			result, err := services.GetProjectCommits(tt.projectId, tt.userName)
+			result, err := services.GetProjectCommits(tt.projectId, tt.userName, mockServer.URL, "test-token")
 
 			if tt.expectError {
 				if err == nil {
